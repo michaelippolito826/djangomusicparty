@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-import { Grid, Button, ButtonGroup, Typography } from "@material-ui/core";
-import { Link } from "react-router-dom";
+import { Grid, Button, Typography } from "@material-ui/core";
 
 export default class Room extends Component {
   constructor(props) {
@@ -16,8 +15,14 @@ export default class Room extends Component {
   }
 
   getRoomDetails() {
-    fetch("/api/get-room" + "?code=" + this.roomCode)
-      .then((response) => response.json())
+    return fetch("/api/get-room" + "?code=" + this.roomCode)
+      .then((response) => {
+        if (!response.ok) {
+          this.props.leaveRoomCallback();
+          this.props.history.push("/");
+        }
+        return response.json();
+      })
       .then((data) => {
         this.setState({
           votesToSkip: data.votes_to_skip,
@@ -28,7 +33,14 @@ export default class Room extends Component {
   }
 
   leaveButtonPressed() {
-    
+    const requestOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    };
+    fetch("/api/leave-room", requestOptions).then((_response) => {
+      this.props.leaveRoomCallback();
+      this.props.history.push("/");
+    });
   }
 
   render() {
@@ -36,7 +48,7 @@ export default class Room extends Component {
       <Grid container spacing={1}>
         <Grid item xs={12} align="center">
           <Typography variant="h4" component="h4">
-            Room: {this.roomCode}
+            Code: {this.roomCode}
           </Typography>
         </Grid>
         <Grid item xs={12} align="center">
@@ -55,7 +67,11 @@ export default class Room extends Component {
           </Typography>
         </Grid>
         <Grid item xs={12} align="center">
-          <Button variant="contained" color="secondary" to="/" component={Link}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={this.leaveButtonPressed}
+          >
             Leave Room
           </Button>
         </Grid>
